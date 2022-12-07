@@ -14,11 +14,9 @@ import static java.lang.System.out;
 
 public class BloomTest {
 
-    BitSet bloom = new BitSet();
+    BloomFilter bloom;
     Set<String> words;
-    int size;
     MessageDigest digest;
-    int[] hashBuf = new int[2];
     byte[] wordBuf = new byte[5];
     Random random = new Random();
 
@@ -29,30 +27,22 @@ public class BloomTest {
 
     @Test
     void testFoo() throws IOException {
-        size = 8 * (int) Files.size(Path.of("src/test/resources/wordlist.txt"));
-        while (size > 80000) {
-            out.println();
-            out.printf("%9d bits", size);
+        var fileSize = 8 * Files.size(Path.of("src/test/resources/wordlist.txt"));
+        out.println(".1% of false positives");
+        out.println("         # of hashes   1   2   3   4   5   6   7   8   9");
+        for (var bits = fileSize; bits > fileSize / 100; bits = bits * 3 / 4) {
+            out.printf("%9d bits (%2d%%)", bits, (bits-1) * 100 / fileSize);
             for (var i = 1; i < 10; i++) {
-                hashBuf = new int[i];
-                initializeBloomFilter();
+                initializeBloomFilter((int) bits, i);
                 testRun();
             }
-            size = (int) (size * 0.75);
+            out.println();
         }
-        out.println();
-//        out.println("=== " + (size/8) + " Bytes ===");
     }
 
-    private void initializeBloomFilter() {
-        bloom.clear();
-        words.forEach(this::addWord);
-    }
-
-    private void addWord(String word) {
-        for (var h: hash(word)) {
-            bloom.set(h);
-        }
+    private void initializeBloomFilter(int size, int hashes) {
+        bloom = new BloomFilter(size, digest, hashes);
+        words.forEach(bloom::add);
     }
 
     private void testRun() {
@@ -61,42 +51,59 @@ public class BloomTest {
         int correct = 0;
         for (int i = 0; i < total; i++) {
             var word = randomWord();
-            if (!isInBloomFilter(word)) continue;
+            if (!bloom.contains(word)) continue;
             positives++;
             if (words.contains(new String(word))) correct++;
         }
-//        out.println("Positives:       " + positives);
-//        out.println("Correct Words:   " + correct);
-//        out.println("False Pos %:     " + ((100 * (positives - correct)) / total));
-        out.printf("  %2d", ((100 * (positives - correct)) / total));
+        out.printf(" %3d", ((1000 * (positives - correct)) / total));
     }
 
     private byte[] randomWord() {
+        var value = random.nextLong() & Long.MAX_VALUE;
         for (var i = 0; i < wordBuf.length; i++) {
-            wordBuf[i] = (byte) ('a' + random.nextInt(26));
+            wordBuf[i] = (byte) ('a' + value % 26);
+            value /= 26;
         }
         return wordBuf;
     }
 
-    private boolean isInBloomFilter(byte[] word) {
-        for (var h: hash(word)) {
-            if (!bloom.get(h)) return false;
-        }
-        return true;
-    }
+    private static class BloomFilter {
+        final BitSet vector = new BitSet();
+        final int size;
+        final MessageDigest digest;
+        final int[] hashBuf;
 
-    private int[] hash(String word) {
-        return hash(word.getBytes());
-    }
-
-    private int[] hash(byte[] word) {
-        digest.reset();
-        var hash = digest.digest(word);
-        var buf = ByteBuffer.wrap(hash);
-        for (var i = 0; i < hashBuf.length; i++) {
-            var n = buf.getInt() & Integer.MAX_VALUE;
-            hashBuf[i] = n % size;
+        BloomFilter(int size, MessageDigest digest, int hashes) {
+            this.size = size;
+            this.digest = digest;
+            this.hashBuf = new int[hashes];
         }
-        return hashBuf;
+
+        void add(String word) {
+            for (var h: hash(word)) {
+                vector.set(h);
+            }
+        }
+
+        boolean contains(byte[] word) {
+            for (var h: hash(word)) {
+                if (!vector.get(h)) return false;
+            }
+            return true;
+        }
+
+        private int[] hash(String word) {
+            return hash(word.getBytes());
+        }
+
+        private int[] hash(byte[] word) {
+            digest.reset();
+            var buf = ByteBuffer.wrap(digest.digest(word));
+            for (var i = 0; i < hashBuf.length; i++) {
+                var n = buf.getInt() & Integer.MAX_VALUE;
+                hashBuf[i] = n % size;
+            }
+            return hashBuf;
+        }
     }
 }
