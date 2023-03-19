@@ -6,8 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.util.*;
 
 import static java.lang.System.out;
@@ -16,6 +15,7 @@ public class BloomTest {
 
     BloomFilter bloom;
     Set<String> words;
+    long dataBits;
     MessageDigest digest;
     byte[] wordBuf = new byte[5];
     Random random = new Random();
@@ -23,25 +23,36 @@ public class BloomTest {
     public BloomTest() throws NoSuchAlgorithmException, IOException {
         digest = MessageDigest.getInstance("sha-512");
         words = new HashSet<>(Files.readAllLines(Path.of("src/test/resources/wordlist.txt")));
+        dataBits = 8 * Files.size(Path.of("src/test/resources/wordlist.txt"));
     }
 
     @Test
-    void testFoo() throws IOException {
-        var fileSize = 8 * Files.size(Path.of("src/test/resources/wordlist.txt"));
+    void testSmallList() {
+        words.clear();
+        for (int i = 1; i < 10; i++) {
+            out.printf("%n== %2d words ==%n%n", i);
+            words.add(new String(randomWord()));
+            dataBits = i * 5 * 8;
+            testWordlist();
+        }
+    }
+
+    @Test
+    void testWordlist() {
         out.println(".1% of false positives");
         out.println("         # of hashes   1   2   3   4   5   6   7   8   9");
-        for (var bits = fileSize; bits > fileSize / 100; bits = bits * 3 / 4) {
-            out.printf("%9d bits (%2d%%)", bits, (bits-1) * 100 / fileSize);
+        for (var vectorBits = dataBits; vectorBits > dataBits / 33 && vectorBits > 5; vectorBits = vectorBits * 3 / 4) {
+            out.printf("%9d bits (%2d%%)", vectorBits, (vectorBits-1) * 100 / dataBits);
             for (var i = 1; i < 10; i++) {
-                initializeBloomFilter((int) bits, i);
+                initializeBloomFilter((int) vectorBits, i);
                 testRun();
             }
             out.println();
         }
     }
 
-    private void initializeBloomFilter(int size, int hashes) {
-        bloom = new BloomFilter(size, digest, hashes);
+    private void initializeBloomFilter(int vectorBits, int hashes) {
+        bloom = new BloomFilter(vectorBits, digest, hashes);
         words.forEach(bloom::add);
     }
 
@@ -55,7 +66,7 @@ public class BloomTest {
             positives++;
             if (words.contains(new String(word))) correct++;
         }
-        out.printf(" %3d", ((1000 * (positives - correct)) / total));
+        out.printf(" %3d", ((1000 * (positives - correct - 1)) / total));
     }
 
     private byte[] randomWord() {
@@ -71,23 +82,25 @@ public class BloomTest {
         final BitSet vector = new BitSet();
         final int size;
         final MessageDigest digest;
+        final byte[] digestBuf;
         final int[] hashBuf;
 
         BloomFilter(int size, MessageDigest digest, int hashes) {
             this.size = size;
             this.digest = digest;
+            this.digestBuf = digest.digest(new byte[0]);
             this.hashBuf = new int[hashes];
         }
 
         void add(String word) {
             for (var h: hash(word)) {
-                vector.set(h);
+                vector.set(h % size);
             }
         }
 
         boolean contains(byte[] word) {
             for (var h: hash(word)) {
-                if (!vector.get(h)) return false;
+                if (!vector.get(h % size)) return false;
             }
             return true;
         }
@@ -97,13 +110,18 @@ public class BloomTest {
         }
 
         private int[] hash(byte[] word) {
-            digest.reset();
-            var buf = ByteBuffer.wrap(digest.digest(word));
-            for (var i = 0; i < hashBuf.length; i++) {
-                var n = buf.getInt() & Integer.MAX_VALUE;
-                hashBuf[i] = n % size;
+            try {
+                digest.reset();
+                digest.update(word);
+                int bytes = digest.digest(digestBuf, 0, digestBuf.length);
+                var buf = ByteBuffer.wrap(digestBuf, 0, bytes);
+                for (var i = 0; i < hashBuf.length; i++) {
+                    hashBuf[i] = buf.getInt() & Integer.MAX_VALUE;
+                }
+                return hashBuf;
+            } catch (DigestException ex) {
+                throw new IllegalArgumentException(ex);
             }
-            return hashBuf;
         }
     }
 }
