@@ -6,6 +6,9 @@ import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Recursive with callback
+ */
 public class Chop5Test extends ChopTestBase {
 
     @Override

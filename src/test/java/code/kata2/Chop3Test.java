@@ -2,6 +2,9 @@ package code.kata2;
 
 import java.util.List;
 
+/**
+ * Recursive with list slicing
+ */
 public class Chop3Test extends ChopTestBase {
 
     @Override

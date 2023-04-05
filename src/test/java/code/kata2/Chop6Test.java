@@ -3,6 +3,9 @@ package code.kata2;
 import java.util.List;
 import java.util.TreeSet;
 
+/**
+ * Built in collection
+ */
 public class Chop6Test extends ChopTestBase {
 
     @Override

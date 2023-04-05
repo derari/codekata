@@ -2,6 +2,9 @@ package code.kata2;
 
 import java.util.List;
 
+/**
+ * Basic recursive algorithm
+ */
 public class Chop1Test extends ChopTestBase {
     
     protected int chop(int n, List<Integer> list) {

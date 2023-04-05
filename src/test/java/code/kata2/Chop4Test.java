@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+/**
+ * Trampoline pattern
+ */
 public class Chop4Test extends ChopTestBase {
 
     @Override
