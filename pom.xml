@@ -76,12 +76,3 @@
     </dependencies>
 
 </project>
-
-
-<!--
-* teams-connector -frontend/-backend
-* cta   -frontend/-backend   
-* order -frontend/-backend
-* ebit  -frontend/-payment-manager...
-* global --- easybell-com / orbis-crm
--->
