@@ -13,55 +13,56 @@ import static java.lang.System.out;
 
 public class BloomTest {
 
-    BloomFilter bloom;
-    Set<String> words;
-    long dataBits;
-    MessageDigest digest;
-    byte[] wordBuf = new byte[5];
-    Random random = new Random();
+    final MessageDigest digest;
+    final RandomWord randomWord = new RandomWord(5);
 
-    public BloomTest() throws NoSuchAlgorithmException, IOException {
+    public BloomTest() throws NoSuchAlgorithmException {
         digest = MessageDigest.getInstance("sha-512");
-        words = new HashSet<>(Files.readAllLines(Path.of("src/test/resources/wordlist.txt")));
-        dataBits = 8 * Files.size(Path.of("src/test/resources/wordlist.txt"));
     }
 
     @Test
     void testSmallList() {
-        words.clear();
+        var words = new HashSet<String>();
         for (int i = 1; i < 10; i++) {
             out.printf("%n== %2d words ==%n%n", i);
-            words.add(new String(randomWord()));
-            dataBits = i * 5 * 8;
-            testWordlist();
+            words.add(new String(randomWord.get()));
+            testRun(i * 5 * 8, words);
         }
     }
 
     @Test
-    void testWordlist() {
+    void testWordlist() throws IOException {
+        var file = Path.of("src/test/resources/wordlist.txt");
+        var dataBits = 8 * Files.size(file);
+        var words = new HashSet<>(Files.readAllLines(file));
+        testRun(dataBits, words);
+    }
+
+    void testRun(long dataBits, Set<String> words) {
         out.println(".1% of false positives");
         out.println("         # of hashes   1   2   3   4   5   6   7   8   9");
         for (var vectorBits = dataBits; vectorBits > dataBits / 33 && vectorBits > 5; vectorBits = vectorBits * 3 / 4) {
             out.printf("%9d bits (%2d%%)", vectorBits, (vectorBits-1) * 100 / dataBits);
             for (var i = 1; i < 10; i++) {
-                initializeBloomFilter((int) vectorBits, i);
-                testRun();
+                var bloom = initializeBloomFilter((int) vectorBits, i, words);
+                testRun(bloom, words);
             }
             out.println();
         }
     }
 
-    private void initializeBloomFilter(int vectorBits, int hashes) {
-        bloom = new BloomFilter(vectorBits, digest, hashes);
+    private BloomFilter initializeBloomFilter(int vectorBits, int hashes, Set<String> words) {
+        var bloom = new BloomFilter(vectorBits, digest, hashes);
         words.forEach(bloom::add);
+        return bloom;
     }
 
-    private void testRun() {
+    private void testRun(BloomFilter bloom, Set<String> words) {
         int total = 100000;
         int positives = 0;
         int correct = 0;
         for (int i = 0; i < total; i++) {
-            var word = randomWord();
+            var word = randomWord.get();
             if (!bloom.contains(word)) continue;
             positives++;
             if (words.contains(new String(word))) correct++;
@@ -69,14 +70,6 @@ public class BloomTest {
         out.printf(" %3d", ((1000 * (positives - correct - 1)) / total));
     }
 
-    private byte[] randomWord() {
-        var value = random.nextLong() & Long.MAX_VALUE;
-        for (var i = 0; i < wordBuf.length; i++) {
-            wordBuf[i] = (byte) ('a' + value % 26);
-            value /= 26;
-        }
-        return wordBuf;
-    }
 
     private static class BloomFilter {
         final BitSet vector = new BitSet();
@@ -122,6 +115,24 @@ public class BloomTest {
             } catch (DigestException ex) {
                 throw new IllegalArgumentException(ex);
             }
+        }
+    }
+
+    private static class RandomWord {
+        final byte[] wordBuf;
+        final Random random = new Random();
+
+        public RandomWord(int length) {
+            this.wordBuf = new byte[length];
+        }
+
+        public byte[] get() {
+            var value = random.nextLong() & Long.MAX_VALUE;
+            for (var i = 0; i < wordBuf.length; i++) {
+                wordBuf[i] = (byte) ('a' + value % 26);
+                value /= 26;
+            }
+            return wordBuf;
         }
     }
 }
