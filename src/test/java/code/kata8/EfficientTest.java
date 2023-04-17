@@ -59,10 +59,12 @@ public class EfficientTest extends TestBase {
 
         final String string;
         final char[] letters;
+        int hashcode;
 
         Word(String string) {
             this.string = string;
             this.letters = string.toCharArray();
+            this.hashcode = Arrays.hashCode(letters);
         }
 
         Word(int length) {
@@ -73,6 +75,7 @@ public class EfficientTest extends TestBase {
         public void read(int position, Word word) {
             assert string == null : "mutable word expected";
             System.arraycopy(word.letters, position, letters, 0, length());
+            this.hashcode = Arrays.hashCode(letters);
         }
 
         public int length() {
@@ -93,7 +96,7 @@ public class EfficientTest extends TestBase {
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(letters);
+            return hashcode;
         }
     }
 }
