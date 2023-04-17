@@ -40,13 +40,13 @@ public class ExtensibleTest extends TestBase {
         var db = getInstance();
         db.addAll("ah", "ha", "are", "era", "aha");
         db.addAll("bus", "sub", "bob");
-        db.addAll("acorn");
+        db.addAll("aloha");
 
         var pairs = db.getReversible('a');
         assertThat(pairs, hasItems("ha", "era", "aha"));
         assertThat(pairs, not(hasItem("are")));
         assertThat(pairs, not(hasItem("bus")));
-        assertThat(pairs, not(hasItem("acorn")));
+        assertThat(pairs, not(hasItem("aloha")));
     }
 
     static class ExtensibleImpl implements PairFinder {
