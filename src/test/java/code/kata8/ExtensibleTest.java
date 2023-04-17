@@ -164,11 +164,12 @@ public class ExtensibleTest extends TestBase {
 
         @Override
         void add(Word word) {
+            buf.read(word);
             for (int length1 = 1; length1 < word.length(); length1++) {
-                buf.read(word, 0, length1);
+                buf.setRange(0, length1);
                 var found1 = lookup.apply(buf);
                 if (found1 == null) continue;
-                buf.read(word, length1, word.length() - length1);
+                buf.setRange(length1, word.length() - length1);
                 var found2 = lookup.apply(buf);
                 if (found2 == null) continue;
                 result.add(List.of(found1.toString(), found2.toString()));
@@ -184,7 +185,7 @@ public class ExtensibleTest extends TestBase {
 
         @Override
         void add(Word word) {
-            buf.read(word, 0, word.length());
+            buf.read(word);
             buf.reverse();
             var found = lookup.apply(buf);
             if (found == null) return;
@@ -196,6 +197,7 @@ public class ExtensibleTest extends TestBase {
 
         final String string;
         final char[] letters;
+        int start = 0;
         int length;
         int hashcode;
 
@@ -212,17 +214,24 @@ public class ExtensibleTest extends TestBase {
             this.length = 0;
         }
 
-        public void read(Word word, int position, int length) {
+        public void read(Word word) {
             assert string == null : "mutable word expected";
-            System.arraycopy(word.letters, position, letters, 0, length);
+            System.arraycopy(word.letters, 0, letters, 0, word.letters.length);
+            this.start = 0;
+            this.length = word.letters.length;
+            refreshHashCode();
+        }
+
+        public void setRange(int start, int length) {
+            this.start = start;
             this.length = length;
             refreshHashCode();
         }
 
         public void reverse() {
             for (int i = 0; i < length() / 2; i++) {
-                char c = letters[i];
-                letters[i] = letters[length() - i - 1];
+                char c = letters[start + i];
+                letters[start + i] = letters[length() - i - 1];
                 letters[length() - i - 1] = c;
             }
             refreshHashCode();
@@ -234,14 +243,16 @@ public class ExtensibleTest extends TestBase {
 
         @Override
         public String toString() {
-            return string != null ? string : new String(letters);
+            if (string != null) return string;
+            return "[" + start + '/' + length + ']' + new String(letters);
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Word word)) return false;
-            return Arrays.equals(letters, 0, length(), word.letters, 0, word.length());
+            return Arrays.equals(letters, start, start + length(),
+                    word.letters, word.start, word.start + word.length());
         }
 
         @Override
@@ -252,7 +263,7 @@ public class ExtensibleTest extends TestBase {
         private void refreshHashCode() {
             int result = 1;
             for (int i = 0; i < length; i++)
-                result = 31 * result + letters[i];
+                result = 31 * result + letters[start + i];
             this.hashcode = result;
         }
     }
