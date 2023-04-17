@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 public class ExtensibleTest extends TestBase {
 
@@ -35,17 +35,27 @@ public class ExtensibleTest extends TestBase {
         assertThat(pairs, hasItem(List.of("con", "foul")));
     }
 
+    @Test
+    void testSmallReverse() {
+        var db = getInstance();
+        db.addAll("ah", "ha", "are", "era", "aha");
+        db.addAll("bus", "sub", "bob");
+        db.addAll("acorn");
+
+        var pairs = db.getReversible('a');
+        assertThat(pairs, hasItems("ha", "era", "aha"));
+        assertThat(pairs, not(hasItem("are")));
+        assertThat(pairs, not(hasItem("bus")));
+        assertThat(pairs, not(hasItem("acorn")));
+    }
+
     static class ExtensibleImpl implements PairFinder {
 
-        final ItemAggregator<Word> impl;
-
-        public ExtensibleImpl() {
-            this.impl = new ItemAggregator<>(Word::new);
-        }
+        final ItemAggregator<Word> items = new ItemAggregator<>();
 
         @Override
         public void add(String word) {
-            impl.add(word);
+            items.add(new Word(word));
         }
 
         @Override
@@ -54,53 +64,68 @@ public class ExtensibleTest extends TestBase {
         }
 
         public List<List<String>> getPairs(int min, int max) {
-            return impl.aggregate(
+            return items.aggregate(
                     word -> word.length() >= min && word.length() <= max,
-                    WordPairCollector::new);
+                    WordCollector.factory(WordPairs::new));
+        }
+
+        public List<String> getReversible(char first) {
+            return items.aggregate(
+                    word -> word.length() > 0 && word.letters[0] == first,
+                    WordCollector.factory(WordReverse::new));
         }
     }
 
     static class ItemAggregator<I> {
 
         final Map<I, I> items = new HashMap<>();
-        final Function<? super String, ? extends I> parser;
 
-        public ItemAggregator(Function<? super String, ? extends I> parser) {
-            this.parser = parser;
+        public void add(I value) {
+            items.put(value, value);
         }
 
-        public void add(String value) {
-            var item = parser.apply(value);
-            if (item != null) items.put(item, item);
+        public <R> R aggregate(Predicate<? super I> targetFilter, Function<UnaryOperator<I>, ? extends Collector<I, ?, R>> collectorFactory) {
+            return aggregate(lookup -> Collectors.filtering(targetFilter, collectorFactory.apply(lookup)));
         }
 
-        public <R> R aggregate(Predicate<? super I> targetFilter, Function<UnaryOperator<I>, Collector<I, ?, R>> collector) {
-            return items.values().stream()
-                    .filter(targetFilter)
-                    .collect(collector.apply(items::get));
+        public <R> R aggregate(Function<UnaryOperator<I>, ? extends Collector<I, ?, R>> collectorFactory) {
+            return items.values().parallelStream()
+                    .collect(collectorFactory.apply(items::get));
         }
     }
 
-    record WordPairCollector(UnaryOperator<Word> lookup) implements Collector<Word, WordPairs, List<List<String>>> {
+    static class WordCollector<R> implements Collector<Word, WordAccumulator<R>, List<R>> {
 
-        @Override
-        public Supplier<WordPairs> supplier() {
-            return () -> new WordPairs(lookup);
+        static <R> Function<UnaryOperator<Word>, WordCollector<R>> factory(Function<? super UnaryOperator<Word>, ? extends WordAccumulator<R>> newAccumulator) {
+            return lookup -> new WordCollector<>(newAccumulator, lookup);
+        }
+
+        protected Function<? super UnaryOperator<Word>, ? extends WordAccumulator<R>> newAccumulator;
+        protected UnaryOperator<Word> lookup;
+
+        public WordCollector(Function<? super UnaryOperator<Word>, ? extends WordAccumulator<R>> newAccumulator, UnaryOperator<Word> lookup) {
+            this.newAccumulator = newAccumulator;
+            this.lookup = lookup;
         }
 
         @Override
-        public BiConsumer<WordPairs, Word> accumulator() {
-            return WordPairs::add;
+        public Supplier<WordAccumulator<R>> supplier() {
+            return () -> newAccumulator.apply(lookup);
         }
 
         @Override
-        public BinaryOperator<WordPairs> combiner() {
-            return WordPairs::combine;
+        public BiConsumer<WordAccumulator<R>, Word> accumulator() {
+            return WordAccumulator::add;
         }
 
         @Override
-        public Function<WordPairs, List<List<String>>> finisher() {
-            return WordPairs::finish;
+        public BinaryOperator<WordAccumulator<R>> combiner() {
+            return WordAccumulator::combine;
+        }
+
+        @Override
+        public Function<WordAccumulator<R>, List<R>> finisher() {
+            return WordAccumulator::finish;
         }
 
         @Override
@@ -109,12 +134,35 @@ public class ExtensibleTest extends TestBase {
         }
     }
 
-    record WordPairs(UnaryOperator<Word> lookup, Word buf, List<List<String>> result) {
+    static abstract class WordAccumulator<R> {
 
-        public WordPairs(UnaryOperator<Word> lookup) {
-            this(lookup, new Word(64), new ArrayList<>());
+        protected final UnaryOperator<Word> lookup;
+        protected final Word buf = new Word(64);
+        protected final List<R> result = new ArrayList<>();
+
+        public WordAccumulator(UnaryOperator<Word> lookup) {
+            this.lookup = lookup;
         }
 
+        abstract void add(Word word);
+
+        WordAccumulator<R> combine(WordAccumulator<R> other) {
+            result.addAll(other.result);
+            return this;
+        }
+
+        List<R> finish() {
+            return result;
+        }
+    }
+
+    static class WordPairs extends WordAccumulator<List<String>> {
+
+        public WordPairs(UnaryOperator<Word> lookup) {
+            super(lookup);
+        }
+
+        @Override
         void add(Word word) {
             for (int length1 = 1; length1 < word.length(); length1++) {
                 buf.read(word, 0, length1);
@@ -126,14 +174,21 @@ public class ExtensibleTest extends TestBase {
                 result.add(List.of(found1.toString(), found2.toString()));
             }
         }
+    }
 
-        WordPairs combine(WordPairs other) {
-            result.addAll(other.result);
-            return this;
+    static class WordReverse extends WordAccumulator<String> {
+
+        public WordReverse(UnaryOperator<Word> lookup) {
+            super(lookup);
         }
 
-        List<List<String>> finish() {
-            return result;
+        @Override
+        void add(Word word) {
+            buf.read(word, 0, word.length());
+            buf.reverse();
+            var found = lookup.apply(buf);
+            if (found == null) return;
+            result.add(found.toString());
         }
     }
 
@@ -148,20 +203,29 @@ public class ExtensibleTest extends TestBase {
             this.string = string;
             this.letters = string.toCharArray();
             this.length = letters.length;
-            this.hashcode = computeHashCode();
+            refreshHashCode();
         }
 
         Word(int length) {
             this.string = null;
             this.letters = new char[length];
-            this.length = length;
+            this.length = 0;
         }
 
         public void read(Word word, int position, int length) {
             assert string == null : "mutable word expected";
             System.arraycopy(word.letters, position, letters, 0, length);
             this.length = length;
-            this.hashcode = computeHashCode();
+            refreshHashCode();
+        }
+
+        public void reverse() {
+            for (int i = 0; i < length() / 2; i++) {
+                char c = letters[i];
+                letters[i] = letters[length() - i - 1];
+                letters[length() - i - 1] = c;
+            }
+            refreshHashCode();
         }
 
         public int length() {
@@ -177,9 +241,7 @@ public class ExtensibleTest extends TestBase {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Word word)) return false;
-            return length() == word.length() &&
-                    Arrays.equals(letters, 0, length(),
-                            word.letters, 0, length());
+            return Arrays.equals(letters, 0, length(), word.letters, 0, word.length());
         }
 
         @Override
@@ -187,11 +249,11 @@ public class ExtensibleTest extends TestBase {
             return hashcode;
         }
 
-        private int computeHashCode() {
+        private void refreshHashCode() {
             int result = 1;
             for (int i = 0; i < length; i++)
                 result = 31 * result + letters[i];
-            return result;
+            this.hashcode = result;
         }
     }
 }
