@@ -41,11 +41,15 @@ public abstract class TestBase {
         var start = -System.currentTimeMillis();
         words.forEach(db::add);
 
-        var result = db.getPairs();
+        var result = List.<List<String>>of();
+        var repeat = 10000;
+        for (int i = 0; i < repeat; i++) {
+            result = db.getPairs();
+        }
 
         out.println();
         out.println(getClass().getSimpleName().replace("Test", ""));
-        out.printf("Total time: %dms\n", start + System.currentTimeMillis());
+        out.printf("Total time: %dms\n", (start + System.currentTimeMillis()) / repeat);
         out.printf("%d Results:\n", result.size());
         out.println(result);
         assertThat(result.size(), is(30599));
