@@ -79,6 +79,7 @@ public class Checkout {
         }
 
         Map<String, Integer> update(Map<String, Integer> updates) {
+            if (!rule.requireUpdate(state, updates.keySet())) return updates;
             update.quantities.clear();
             update.quantities.putAll(updates);
             updates.forEach((product, quantity) -> total.quantities.merge(product, quantity, Integer::sum));

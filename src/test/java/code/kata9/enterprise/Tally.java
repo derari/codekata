@@ -18,6 +18,11 @@ public interface Tally {
 
         List<Bill.Item> getPreviouslyBilled();
 
-        void clear(String product);
+        default void clear(String product) {
+            var previous = getPreviouslyBilled().stream()
+                    .filter(item -> item.product().equals(product))
+                    .toList();
+            previous.forEach(item -> getTotal().bill(item, 0));
+        }
     }
 }
