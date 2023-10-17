@@ -58,16 +58,18 @@ public class BloomTest {
     }
 
     private void testRun(BloomFilter bloom, Set<String> words) {
-        int total = 100000;
-        int positives = 0;
-        int correct = 0;
-        for (int i = 0; i < total; i++) {
+        var start = -System.currentTimeMillis();
+        var iterations = 0;
+        var positives = 0;
+        var correct = 0;
+        while (start + System.currentTimeMillis() < 300) {
+            iterations++;
             var word = randomWord.get();
             if (!bloom.contains(word)) continue;
             positives++;
             if (words.contains(new String(word))) correct++;
         }
-        out.printf(" %3d", ((1000 * (positives - correct - 1)) / total));
+        out.printf(" %3d", ((1000 * (positives - correct - 1)) / iterations));
     }
 
 

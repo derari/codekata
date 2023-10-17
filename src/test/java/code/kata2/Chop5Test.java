@@ -21,7 +21,7 @@ public class Chop5Test extends ChopTestBase {
         var i = list.size() / 2;
         var v = list.get(i);
         if (v == n) return callback.applyAsInt(i);
-        if (v > n) return chop(n, list.subList(i+1, list.size()), j -> callback.applyAsInt(j + i + 1));
+        if (v < n) return chop(n, list.subList(i + 1, list.size()), j -> callback.applyAsInt(j + i + 1));
         return chop(n, list.subList(0, i), callback);
     }
 }
