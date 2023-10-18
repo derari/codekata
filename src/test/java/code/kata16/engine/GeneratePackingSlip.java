@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record GeneratePackingSlip(
         @JsonProperty(required = true)
         Department department
-) implements ProcessingRule<PaymentProcessingState> {
+) implements Action<PaymentProcessingState> {
 
     @Override
     public boolean apply(PaymentProcessingState state, OtherServices services) {

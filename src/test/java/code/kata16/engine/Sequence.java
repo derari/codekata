@@ -4,9 +4,9 @@ import code.kata16.OtherServices;
 
 import java.util.List;
 
-public record Sequence<T extends State>(List<ProcessingRule<T>> steps) implements ProcessingRule<T> {
+public record Sequence<T extends State>(List<Action<T>> steps) implements Action<T> {
 
-    public static <T extends State> ProcessingRule<T> of(List<ProcessingRule<T>> steps) {
+    public static <T extends State> Action<T> of(List<Action<T>> steps) {
         if (steps == null) return new NoOp<>(false);
         if (steps.isEmpty()) return new NoOp<>(true);
         if (steps.size() == 1) return steps.get(0);
@@ -14,7 +14,7 @@ public record Sequence<T extends State>(List<ProcessingRule<T>> steps) implement
     }
 
     @SafeVarargs
-    public Sequence(ProcessingRule<T>... steps) {
+    public Sequence(Action<T>... steps) {
         this(List.of(steps));
     }
 

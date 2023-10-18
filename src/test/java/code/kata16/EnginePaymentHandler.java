@@ -1,14 +1,14 @@
 package code.kata16;
 
 import code.kata16.engine.PaymentProcessingState;
-import code.kata16.engine.ProcessingRule;
+import code.kata16.engine.Action;
 
 public class EnginePaymentHandler implements PaymentHandler {
 
-    private final ProcessingRule<PaymentProcessingState> engine;
+    private final Action<PaymentProcessingState> engine;
     private final OtherServices services;
 
-    public EnginePaymentHandler(ProcessingRule<PaymentProcessingState> engine, OtherServices services) {
+    public EnginePaymentHandler(Action<PaymentProcessingState> engine, OtherServices services) {
         this.engine = engine;
         this.services = services;
     }

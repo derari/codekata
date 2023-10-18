@@ -9,19 +9,19 @@ public record Conditional<T extends State>(
         Condition<T> condition,
         @JsonAlias("then")
         @JsonSetter(nulls = Nulls.AS_EMPTY)
-        ProcessingRule<T> ifTrue,
+        Action<T> ifTrue,
         @JsonAlias("else")
         @JsonSetter(nulls = Nulls.AS_EMPTY)
-        ProcessingRule<T> ifFalse
-) implements ProcessingRule<T> {
+        Action<T> ifFalse
+) implements Action<T> {
 
     public Conditional(@JsonAlias("if")
                        @JsonProperty(required = true)
                        Condition<T> condition,
                        @JsonAlias("then")
-                       ProcessingRule<T> ifTrue,
+                       Action<T> ifTrue,
                        @JsonAlias("else")
-                       ProcessingRule<T> ifFalse) {
+                       Action<T> ifFalse) {
         this.condition = condition;
         this.ifTrue = NoOp.nonNull(ifTrue);
         this.ifFalse = NoOp.nonNull(ifFalse);

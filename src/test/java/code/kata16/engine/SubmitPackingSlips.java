@@ -2,7 +2,7 @@ package code.kata16.engine;
 
 import code.kata16.OtherServices;
 
-public record SubmitPackingSlips() implements ProcessingRule<PaymentProcessingState> {
+public record SubmitPackingSlips() implements Action<PaymentProcessingState> {
 
     @Override
     public boolean apply(PaymentProcessingState state, OtherServices services) {

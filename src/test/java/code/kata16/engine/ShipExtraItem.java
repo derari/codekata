@@ -2,13 +2,15 @@ package code.kata16.engine;
 
 import code.kata16.OtherServices;
 import code.kata16.ProductType;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public record ShipExtraItem(String name, ProductType type, String comment) implements ProcessingRule<PaymentProcessingState> {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NONE)
+public record ShipExtraItem(String name, ProductType type) implements Action<PaymentProcessingState> {
 
     @Override
     public boolean apply(PaymentProcessingState state, OtherServices services) {
         var item = state.order().extraItem(name, type);
-        state.log("Packing free '%s' (%s)", item, comment);
+        state.log("Adding extra %s '%s'", type, item);
         state.packingSlip().items().add(item);
         return true;
     }

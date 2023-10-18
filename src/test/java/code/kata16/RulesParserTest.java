@@ -1,17 +1,17 @@
 package code.kata16;
 
 import code.kata16.engine.PaymentProcessingState;
-import code.kata16.engine.ProcessingRule;
+import code.kata16.engine.Action;
 
-class RulesJsonParserTest extends PaymentHandlerTestBase {
+class RulesParserTest extends PaymentHandlerTestBase {
 
     @Override
     protected PaymentHandler instance(OtherServices services) {
         return new EnginePaymentHandler(engine(), services);
     }
 
-    private ProcessingRule<PaymentProcessingState> engine() {
-        return new RulesJsonParser().parse(JSON);
+    private Action<PaymentProcessingState> engine() {
+        return new RulesParser().parseJson(JSON);
     }
 
     private static final String JSON = """
@@ -55,10 +55,13 @@ class RulesJsonParserTest extends PaymentHandlerTestBase {
                         ]
                       },
                       "then": {
-                        "action": "ShipExtraItem",
-                        "name": "First Aid",
-                        "type": "video",
-                        "comment": "court decision in 1997"
+                        "action": "Comment",
+                        "comment": "court decision in 1997",
+                        "rule": {
+                          "action": "ShipExtraItem",
+                          "name": "First Aid",
+                          "type": "video"
+                        }
                       }
                     },
                     {
