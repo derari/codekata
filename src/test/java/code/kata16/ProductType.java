@@ -1,37 +1,83 @@
 package code.kata16;
 
-import java.util.List;
+import java.util.*;
 
 public enum ProductType {
 
+    PHYSICAL(0),
+    FOOD(1),
     KEBAB,
+    MEDIA(1),
     BOOK,
     VIDEO,
 
+    MEMBERSHIP(0),
+    GYM_MEMBERSHIP(1),
     GYM_BASIC,
-    GYM_PREMIUM;
+    GYM_PREMIUM,
+    GYM_ULTRA,
+    CINEMA_MEMBERSHIP(1),
+    CINEMA_BASIC,
+    CINEMA_PREMIUM,
+    CINEMA_ULTRA,
+    ;
 
-    public ProductClass getProductClass() {
-        if (isPhysical()) return ProductClass.PHYSICAL;
-        if (isMembership()) return ProductClass.MEMBERSHIP;
-        return ProductClass.OTHER;
+    private final int groupLevel;
+    private final List<ProductType> parents = new ArrayList<>();
+    private final List<ProductType> upgradable = new ArrayList<>();
+    private final List<ProductType> upgradableRO = Collections.unmodifiableList(upgradable);
+
+    ProductType(int groupLevel) {
+        this.groupLevel = groupLevel;
+    }
+
+    ProductType() {
+        this.groupLevel = 99;
+    }
+
+    public boolean isProduct() {
+        return groupLevel == 99;
+    }
+
+    public boolean isGroup() {
+        return groupLevel < 99;
+    }
+
+    public boolean canUpgrade() {
+        return isMembership() && isProduct();
+    }
+
+    public boolean is(ProductType type) {
+        return this == type || parents.contains(type);
     }
 
     public boolean isPhysical() {
-        return between(KEBAB, VIDEO);
+        return is(PHYSICAL);
     }
 
     public boolean isMembership() {
-        return between(GYM_BASIC, GYM_PREMIUM);
+        return is(MEMBERSHIP);
     }
 
     public List<ProductType> getUpgradable() {
-        if (this == GYM_PREMIUM) return List.of(GYM_BASIC);
-        return List.of();
+        return upgradableRO;
     }
 
-    private boolean between(ProductType low, ProductType high) {
-        int n = ordinal();
-        return n >= low.ordinal() && n <= high.ordinal();
+    public static final List<ProductType> VALUES = List.of(ProductType.values());
+
+    static {
+        var parents = new ArrayList<ProductType>();
+        var upgradable = new ArrayList<ProductType>();
+        VALUES.forEach(type -> {
+            parents.removeIf(p -> p.groupLevel >= type.groupLevel);
+            type.parents.addAll(parents);
+            parents.add(type);
+            if (type.canUpgrade()) {
+                type.upgradable.addAll(upgradable);
+                upgradable.add(type);
+            } else {
+                upgradable.clear();
+            }
+        });
     }
 }

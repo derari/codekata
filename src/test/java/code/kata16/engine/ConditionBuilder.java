@@ -28,10 +28,6 @@ public class ConditionBuilder {
         return and(And.all(conditions));
     }
 
-    public ConditionBuilder productClass(ProductClass clazz) {
-        return and(new IsProductClass(clazz));
-    }
-
     public ConditionBuilder productType(ProductType type) {
         return and(new IsProductType(type));
     }

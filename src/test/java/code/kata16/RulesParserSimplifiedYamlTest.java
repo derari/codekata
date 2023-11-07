@@ -16,7 +16,7 @@ class RulesParserSimplifiedYamlTest extends PaymentHandlerTestBase {
 
     private static final String YAML = """
             - if:
-                productClass: physical
+                productType: physical
               then:
                 - packagingSlipFor: shipping
                 - if:
@@ -34,7 +34,7 @@ class RulesParserSimplifiedYamlTest extends PaymentHandlerTestBase {
                 - if: HasSalesAgent
                   then: GenerateCommission
             - if:
-                productClass: membership
+                productType: membership
               then:
                 if:
                   hasUpgradableMembership: false

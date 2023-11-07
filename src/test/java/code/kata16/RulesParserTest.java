@@ -19,8 +19,8 @@ class RulesParserTest extends PaymentHandlerTestBase {
               {
                 "action": "Conditional",
                 "if": {
-                  "test": "IsProductClass",
-                  "class": "physical"
+                  "test": "IsProductType",
+                  "type": "physical"
                 },
                 "then": {
                   "steps": [
@@ -79,8 +79,8 @@ class RulesParserTest extends PaymentHandlerTestBase {
               {
                 "action": "Conditional",
                 "if": {
-                  "test": "IsProductClass",
-                  "class": "membership"
+                  "test": "IsProductType",
+                  "type": "membership"
                 },
                 "then": {
                   "action": "Conditional",

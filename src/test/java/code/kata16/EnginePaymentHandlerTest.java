@@ -18,8 +18,8 @@ class EnginePaymentHandlerTest extends PaymentHandlerTestBase {
 
     private Action<PaymentProcessingState> engine() {
         return new Sequence<>(
-                new IsProductClass(ProductClass.PHYSICAL).ifTrue(physicalRules()),
-                new IsProductClass(ProductClass.MEMBERSHIP).ifTrue(membershipRules()),
+                new IsProductType(ProductType.PHYSICAL).ifTrue(physicalRules()),
+                new IsProductType(ProductType.MEMBERSHIP).ifTrue(membershipRules()),
                 new SubmitPackingSlips()
         );
     }

@@ -7,6 +7,6 @@ public record IsProductType(ProductType type) implements Condition<PaymentProces
 
     @Override
     public boolean test(PaymentProcessingState state, OtherServices services) {
-        return state.order().productType() == type;
+        return state.order().productType().is(type);
     }
 }
