@@ -18,7 +18,7 @@ abstract class PaymentHandlerTestBase {
 
     @Test
     void physicalProductIsShipped() {
-        var order = new Order(customer, "Extra Large", ProductType.KEBAB, null);
+        var order = new Order(customer, "Extra Large", ProductType.KEBAB);
 
         instance().paymentReceived(order);
 
@@ -30,7 +30,7 @@ abstract class PaymentHandlerTestBase {
 
     @Test
     void bookShipmentForRoyalties() {
-        var order = new Order(customer, "Things for Dummies", ProductType.BOOK, null);
+        var order = new Order(customer, "Things for Dummies", ProductType.BOOK);
 
         instance().paymentReceived(order);
 
@@ -42,7 +42,7 @@ abstract class PaymentHandlerTestBase {
     }
     @Test
     void extraItem() {
-        var order = new Order(customer, "Learning to Ski", ProductType.VIDEO, null);
+        var order = new Order(customer, "Learning to Ski", ProductType.VIDEO);
 
         instance().paymentReceived(order);
 
@@ -68,7 +68,7 @@ abstract class PaymentHandlerTestBase {
 
     @Test
     void membershipActivation() {
-        var order = new Order(customer, "100kg FTW", ProductType.GYM_BASIC, null);
+        var order = new Order(customer, "100kg FTW", ProductType.GYM_BASIC);
 
         instance().paymentReceived(order);
 
@@ -79,7 +79,7 @@ abstract class PaymentHandlerTestBase {
 
     @Test
     void membershipUpgrade() {
-        var order = new Order(customer, "1000kg FTW", ProductType.GYM_PREMIUM, null);
+        var order = new Order(customer, "1000kg FTW", ProductType.GYM_PREMIUM);
         when(services.hasMembership(any(), any())).thenAnswer(i -> i.getArgument(1) == ProductType.GYM_BASIC);
 
         instance().paymentReceived(order);

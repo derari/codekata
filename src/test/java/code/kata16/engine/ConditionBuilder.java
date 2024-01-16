@@ -1,6 +1,7 @@
 package code.kata16.engine;
 
 import code.kata16.*;
+import code.kata17.*;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -12,7 +13,7 @@ import java.util.List;
 public class ConditionBuilder {
 
     private Type type = Type.MISSING;
-    private Condition<PaymentProcessingState> condition = new And<>();
+    private Condition<OrderProcessingState> condition = new And<>();
 
     public ConditionBuilder() {
     }
@@ -24,8 +25,12 @@ public class ConditionBuilder {
         this.type = type;
     }
 
-    public ConditionBuilder all(List<Condition<PaymentProcessingState>> conditions) {
+    public ConditionBuilder all(List<? extends Condition<OrderProcessingState>> conditions) {
         return and(And.all(conditions));
+    }
+
+    public ConditionBuilder any(Or<OrderProcessingState> conditions) {
+        return and(conditions);
     }
 
     public ConditionBuilder productType(ProductType type) {
@@ -40,7 +45,19 @@ public class ConditionBuilder {
         return and(new HasUpgradableMembership().is(expected));
     }
 
-    public ConditionBuilder and(Condition<PaymentProcessingState> condition) {
+    public ConditionBuilder paymentMethod(PaymentMethod method) {
+        return and(new HasPaymentMethod(method));
+    }
+
+    public ConditionBuilder orderMethod(OrderMethod method) {
+        return and(new HasOrderMethod(method));
+    }
+
+    public ConditionBuilder isStarted(List<OrderWorkflowKey> keys) {
+        return and(Or.any(keys.stream().map(IsStarted::new).toList()));
+    }
+
+    public ConditionBuilder and(Condition<OrderProcessingState> condition) {
         setType(Type.AND);
         this.condition = this.condition.and(condition);
         return this;
@@ -80,15 +97,15 @@ public class ConditionBuilder {
         }
 
         @SuppressWarnings("unchecked")
-        static Condition<PaymentProcessingState> get(String name) {
+        static Condition<OrderProcessingState> get(String name) {
             try {
-                return (Condition<PaymentProcessingState>) RulesParser.getImplementation(name).getConstructor().newInstance();
+                return (Condition<OrderProcessingState>) RulesParser.getImplementation(name).getConstructor().newInstance();
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalArgumentException(name, ex);
             }
         }
 
-        Condition<PaymentProcessingState> get();
+        Condition<OrderProcessingState> get();
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NONE)

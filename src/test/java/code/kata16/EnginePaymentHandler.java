@@ -1,14 +1,14 @@
 package code.kata16;
 
-import code.kata16.engine.PaymentProcessingState;
+import code.kata16.engine.OrderProcessingState;
 import code.kata16.engine.Action;
 
 public class EnginePaymentHandler implements PaymentHandler {
 
-    private final Action<PaymentProcessingState> engine;
+    private final Action<OrderProcessingState> engine;
     private final OtherServices services;
 
-    public EnginePaymentHandler(Action<PaymentProcessingState> engine, OtherServices services) {
+    public EnginePaymentHandler(Action<OrderProcessingState> engine, OtherServices services) {
         this.engine = engine;
         this.services = services;
     }
@@ -16,7 +16,7 @@ public class EnginePaymentHandler implements PaymentHandler {
     @Override
     public void paymentReceived(Order order) {
         log("processing %s", order);
-        var state = new PaymentProcessingState(this::log, order);
+        var state = new OrderProcessingState(this::log, order);
         engine.apply(state, services);
         log("done (%s)", state);
     }

@@ -16,7 +16,7 @@ class EnginePaymentHandlerTest extends PaymentHandlerTestBase {
     }
     */
 
-    private Action<PaymentProcessingState> engine() {
+    private Action<OrderProcessingState> engine() {
         return new Sequence<>(
                 new IsProductType(ProductType.PHYSICAL).ifTrue(physicalRules()),
                 new IsProductType(ProductType.MEMBERSHIP).ifTrue(membershipRules()),
@@ -24,7 +24,7 @@ class EnginePaymentHandlerTest extends PaymentHandlerTestBase {
         );
     }
 
-    private Action<PaymentProcessingState> physicalRules() {
+    private Action<OrderProcessingState> physicalRules() {
         return new Sequence<>(
                 new GeneratePackingSlip(Department.SHIPPING),
                 new IsProductType(ProductType.BOOK)
@@ -35,7 +35,7 @@ class EnginePaymentHandlerTest extends PaymentHandlerTestBase {
                         .ifTrue(new GenerateCommission()));
     }
 
-    private Action<PaymentProcessingState> membershipRules() {
+    private Action<OrderProcessingState> membershipRules() {
         return new HasUpgradableMembership()
                 .then(new UpgradeMembership())
                 .orElse(new ActivateMembership());

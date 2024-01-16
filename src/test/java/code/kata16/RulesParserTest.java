@@ -1,6 +1,6 @@
 package code.kata16;
 
-import code.kata16.engine.PaymentProcessingState;
+import code.kata16.engine.OrderProcessingState;
 import code.kata16.engine.Action;
 
 class RulesParserTest extends PaymentHandlerTestBase {
@@ -10,7 +10,7 @@ class RulesParserTest extends PaymentHandlerTestBase {
         return new EnginePaymentHandler(engine(), services);
     }
 
-    private Action<PaymentProcessingState> engine() {
+    private Action<OrderProcessingState> engine() {
         return new RulesParser().parseJson(JSON);
     }
 

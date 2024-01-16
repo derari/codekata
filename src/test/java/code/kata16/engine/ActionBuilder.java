@@ -1,6 +1,7 @@
 package code.kata16.engine;
 
 import code.kata16.*;
+import code.kata17.OrderWorkflowKey;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
@@ -12,9 +13,9 @@ import java.util.stream.Stream;
 public class ActionBuilder {
 
     private Type type = Type.NOOP;
-    private final List<Action<PaymentProcessingState>> main = new ArrayList<>();
-    private Condition<PaymentProcessingState> condition;
-    private Action<PaymentProcessingState> orElse;
+    private final List<Action<OrderProcessingState>> main = new ArrayList<>();
+    private Condition<OrderProcessingState> condition;
+    private Action<OrderProcessingState> orElse;
     private String comment;
 
     public ActionBuilder() {
@@ -30,24 +31,24 @@ public class ActionBuilder {
         this.type = type;
     }
 
-    public ActionBuilder steps(List<Action<PaymentProcessingState>> rules) {
+    public ActionBuilder steps(List<Action<OrderProcessingState>> rules) {
         return main(Type.SINGLE, rules);
     }
 
     @JsonProperty("if")
-    public ActionBuilder when(List<Condition<PaymentProcessingState>> conditions) {
+    public ActionBuilder when(List<Condition<OrderProcessingState>> conditions) {
         requireType(Type.CONDITIONAL);
         this.condition = And.all(conditions);
         return this;
     }
 
     @JsonProperty("then")
-    public ActionBuilder ifTrue(List<Action<PaymentProcessingState>> rules) {
+    public ActionBuilder ifTrue(List<Action<OrderProcessingState>> rules) {
         return main(Type.CONDITIONAL, rules);
     }
 
     @JsonProperty("else")
-    public ActionBuilder ifFalse(List<Action<PaymentProcessingState>> rules) {
+    public ActionBuilder ifFalse(List<Action<OrderProcessingState>> rules) {
         requireType(Type.CONDITIONAL);
         orElse = Sequence.of(rules);
         return this;
@@ -55,11 +56,16 @@ public class ActionBuilder {
 
     public ActionBuilder packagingSlipFor(List<Department> departments) {
         var actions = departments.stream().map(GeneratePackingSlip::new);
-        return main(Type.SEQUENCE, actions);
+        return next(actions);
     }
 
     public ActionBuilder shipExtraItem(List<ShipExtraItem> extraItem) {
-        return main(Type.SEQUENCE, extraItem);
+        return next(extraItem);
+    }
+
+    public ActionBuilder schedule(List<OrderWorkflowKey> workflows) {
+        var actions = workflows.stream().map(ScheduleWorkflow::new).toList();
+        return next(actions);
     }
 
     public ActionBuilder comment(String comment) {
@@ -67,11 +73,20 @@ public class ActionBuilder {
         return this;
     }
 
-    private ActionBuilder main(Type type, Collection<? extends Action<PaymentProcessingState>> rules) {
+    @JsonIgnore
+    private ActionBuilder next(Collection<? extends Action<OrderProcessingState>> rules) {
+        return next(rules.stream());
+    }
+
+    private ActionBuilder next(Stream<? extends Action<OrderProcessingState>> rules) {
+        return main(Type.SEQUENCE, rules);
+    }
+
+    private ActionBuilder main(Type type, Collection<? extends Action<OrderProcessingState>> rules) {
         return main(type, rules.stream());
     }
 
-    private ActionBuilder main(Type type, Stream<? extends Action<PaymentProcessingState>> rules) {
+    private ActionBuilder main(Type type, Stream<? extends Action<OrderProcessingState>> rules) {
         requireType(type);
         rules.forEach(main::add);
         return this;
@@ -87,7 +102,7 @@ public class ActionBuilder {
         return new Result<>(build());
     }
 
-    protected Action<PaymentProcessingState> main() {
+    protected Action<OrderProcessingState> main() {
         return Sequence.of(main);
     }
 
@@ -129,15 +144,15 @@ public class ActionBuilder {
         }
 
         @SuppressWarnings("unchecked")
-        static Action<PaymentProcessingState> get(String name) {
+        static Action<OrderProcessingState> get(String name) {
             try {
-                return (Action<PaymentProcessingState>) RulesParser.getImplementation(name).getConstructor().newInstance();
+                return (Action<OrderProcessingState>) RulesParser.getImplementation(name).getConstructor().newInstance();
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalArgumentException(name, ex);
             }
         }
 
-        Action<PaymentProcessingState> get();
+        Action<OrderProcessingState> get();
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NONE)

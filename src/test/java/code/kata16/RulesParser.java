@@ -31,7 +31,7 @@ public class RulesParser {
         yaml = json.copyWith(new YAMLFactory());
     }
 
-    public Action<PaymentProcessingState> parseJson(String input) {
+    public Action<OrderProcessingState> parseJson(String input) {
         try {
             return Sequence.of(json.readValue(input, T_ACTIONS));
         } catch (RuntimeException | IOException ex) {
@@ -39,7 +39,7 @@ public class RulesParser {
         }
     }
 
-    public Action<PaymentProcessingState> parseYaml(String input) {
+    public Action<OrderProcessingState> parseYaml(String input) {
         try {
             return Sequence.of(yaml.readValue(input, T_ACTIONS));
         } catch (RuntimeException | IOException ex) {
@@ -56,7 +56,7 @@ public class RulesParser {
         }
     }
 
-    private static final TypeReference<List<Action<PaymentProcessingState>>> T_ACTIONS = new TypeReference<>() { };
+    private static final TypeReference<List<Action<OrderProcessingState>>> T_ACTIONS = new TypeReference<>() { };
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "action", defaultImpl = UseActionDeserializer.class)
     @JsonTypeIdResolver(Types.class)

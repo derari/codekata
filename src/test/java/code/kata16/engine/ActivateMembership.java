@@ -2,10 +2,10 @@ package code.kata16.engine;
 
 import code.kata16.OtherServices;
 
-public record ActivateMembership() implements Action<PaymentProcessingState> {
+public record ActivateMembership() implements Action<OrderProcessingState> {
 
     @Override
-    public boolean apply(PaymentProcessingState state, OtherServices services) {
+    public boolean apply(OrderProcessingState state, OtherServices services) {
         state.log("Activating membership");
         services.activateMembership(state.order().customer(), state.order().productType());
         return true;

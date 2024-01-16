@@ -7,10 +7,10 @@ import java.util.List;
 
 public record And<T extends State>(List<Condition<T>> conditions) implements Condition<T> {
 
-    public static <T extends State> Condition<T> all(List<Condition<T>> conditions) {
+    public static <T extends State> Condition<T> all(List<? extends Condition<T>> conditions) {
         if (conditions == null) return (a, b) -> false;
         if (conditions.size() == 1) return conditions.get(0);
-        return new And<>(conditions);
+        return new And<>(new ArrayList<>(conditions));
     }
 
     @SafeVarargs

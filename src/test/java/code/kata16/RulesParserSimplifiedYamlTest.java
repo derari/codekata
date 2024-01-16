@@ -1,17 +1,21 @@
 package code.kata16;
 
-import code.kata16.engine.PaymentProcessingState;
+import code.kata16.engine.OrderProcessingState;
 import code.kata16.engine.Action;
 
-class RulesParserSimplifiedYamlTest extends PaymentHandlerTestBase {
+public class RulesParserSimplifiedYamlTest extends PaymentHandlerTestBase {
 
     @Override
     protected PaymentHandler instance(OtherServices services) {
         return new EnginePaymentHandler(engine(), services);
     }
 
-    private Action<PaymentProcessingState> engine() {
+    private Action<OrderProcessingState> engine() {
         return new RulesParser().parseYaml(YAML);
+    }
+
+    public static String getPaymentEventYaml() {
+        return YAML;
     }
 
     private static final String YAML = """

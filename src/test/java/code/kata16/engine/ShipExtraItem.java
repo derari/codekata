@@ -5,10 +5,10 @@ import code.kata16.ProductType;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NONE)
-public record ShipExtraItem(String name, ProductType type) implements Action<PaymentProcessingState> {
+public record ShipExtraItem(String name, ProductType type) implements Action<OrderProcessingState> {
 
     @Override
-    public boolean apply(PaymentProcessingState state, OtherServices services) {
+    public boolean apply(OrderProcessingState state, OtherServices services) {
         var item = state.order().extraItem(name, type);
         state.log("Adding extra %s '%s'", type, item);
         state.packingSlip().items().add(item);

@@ -11,4 +11,6 @@ public interface OtherServices {
     boolean hasMembership(Customer customer, ProductType membership);
 
     void upgradeMembership(Customer customer, ProductType membership);
+
+    void waitForProducts(long id);
 }
