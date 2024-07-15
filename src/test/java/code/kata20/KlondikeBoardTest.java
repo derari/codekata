@@ -110,13 +110,6 @@ class KlondikeBoardTest {
         board.print(System.out);
     }
 
-    @Test
-    void ai() {
-        var board = new KlondikeBoard(new Random(1337));
-        new KlondikeAI(board).play();
-        board.print(System.out, true);
-    }
-
     public boolean moveInTableaus(KlondikeBoard board) {
         return moveAnyToAny(board.getTableaus(), board.getTableaus());
     }

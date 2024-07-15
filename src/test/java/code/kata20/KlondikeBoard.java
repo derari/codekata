@@ -5,15 +5,19 @@ import java.util.*;
 
 public class KlondikeBoard {
 
-    private final Stock stock = new Stock();
-    private final List<Foundation> foundations = List.of(new Foundation(), new Foundation(), new Foundation(), new Foundation());
-    private final List<Tableau> tableaus = List.of(new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau());
+    private final Stock stock;
+    private final List<Foundation> foundations;
+    private final List<Tableau> tableaus;
 
     public KlondikeBoard() {
         this(new Random());
     }
 
     public KlondikeBoard(Random rnd) {
+        stock = new Stock();
+        foundations = List.of(new Foundation(), new Foundation(), new Foundation(), new Foundation());
+        tableaus = List.of(new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau(), new Tableau());
+
         var deck = Card.newDeck();
         Collections.shuffle(deck, rnd);
         for (var i = 0; i < 7; i++) {
@@ -22,6 +26,13 @@ public class KlondikeBoard {
             }
         }
         stock.stock.addAll(deck);
+//        stock.stock.sort(Card::compareTo);
+    }
+
+    protected KlondikeBoard(KlondikeBoard source) {
+        this.stock = source.getStock().copy();
+        this.foundations = source.getFoundations().stream().map(Foundation::copy).toList();
+        this.tableaus = source.getTableaus().stream().map(Tableau::copy).toList();
     }
 
     public Stock getStock() {
@@ -48,8 +59,9 @@ public class KlondikeBoard {
         out.println();
         out.print("Stk:");
         stock.peek(0);
+        stock.stock.forEach(c -> out.print(" " + c));
+        if (!stock.stock.isEmpty()) out.print(" #");
         stock.discard.forEach(c -> out.print(" " + c));
-        stock.stock.forEach(c -> out.print(peek ? " " + c : " **"));
         for (var i = 0; i < foundations.size(); i++) {
             out.print("\nFn" + i + ":");
             var foundation = foundations.get(i);
@@ -67,9 +79,39 @@ public class KlondikeBoard {
         out.println();
     }
 
+    public boolean isWin() {
+        if (!stock.isEmpty()) return false;
+        return getTableaus().stream().allMatch(Tableau::isEmpty);
+    }
+
+    public long longhash() {
+        return getFoundations().stream().mapToLong(f -> longhash(f.cards)).sum() * 9949
+                + getTableaus().stream().mapToLong(Tableau::longhash).sum();
+    }
+
+    public int score() {
+        return 10 * getFoundations().stream().mapToInt(f -> f.cards.size()).sum()
+                - 100 * getTableaus().stream().mapToInt(Tableau::hiddenSize).sum()
+                - (getStock().stock.size() + getStock().discard.size())
+                ;
+    }
+
+    private static long longhash(List<Card> cards) {
+        var hash = 0L;
+        for (var card : cards) {
+            hash = hash * 31 + card.hashCode();
+        }
+        return hash;
+    }
+
     public record Stock(List<Card> stock, List<Card> discard) implements DrawPile {
         public Stock() {
             this(new ArrayList<>(), new ArrayList<>());
+        }
+
+
+        public Stock copy() {
+            return new Stock(new ArrayList<>(stock), new ArrayList<>(discard));
         }
 
         @Override
@@ -107,6 +149,10 @@ public class KlondikeBoard {
                 Collections.reverse(stock);
             }
             discard.add(stock.remove(stock.size() - 1));
+        }
+
+        public boolean find(Card card) {
+            return find(card.suit(), card.rank());
         }
 
         public boolean find(Suit suit, Rank rank) {
@@ -148,11 +194,32 @@ public class KlondikeBoard {
                 }
             };
         }
+
+        public Iterable<DrawPile> autoflip() {
+            return () -> {
+                var it = iterator();
+                return new Iterator<>() {
+                    @Override
+                    public boolean hasNext() {
+                        return it.hasNext();
+                    }
+                    @Override
+                    public DrawPile next() {
+                        it.next();
+                        return Stock.this;
+                    }
+                };
+            };
+        }
     }
 
-    public record Foundation(List<Card> cards) implements PlacePile {
+    public record Foundation(List<Card> cards) implements PlacePile, DrawPile {
         public Foundation() {
             this(new ArrayList<>());
+        }
+
+        private Foundation copy() {
+            return new Foundation(new ArrayList<>(cards));
         }
 
         @Override
@@ -170,11 +237,37 @@ public class KlondikeBoard {
             cards.addAll(source.draw(1));
             return true;
         }
+
+        @Override
+        public boolean isEmpty() {
+            return cards.isEmpty();
+        }
+
+        @Override
+        public int maxDraw() {
+            return cards.isEmpty() ? 0 : 1;
+        }
+
+        @Override
+        public List<Card> draw(int n) {
+            if (n < 0) throw new IllegalArgumentException("Cannot peek negative cards");
+            if (n > maxDraw()) throw new NoSuchElementException("Not enough cards");
+            return List.of(cards.remove(cards.size() - 1));
+        }
+
+        @Override
+        public List<Card> peek(int n) {
+            return cards.isEmpty() ? List.of() : List.of(cards.get(cards.size() - 1));
+        }
     }
 
     public record Tableau(ArrayList<Card> hidden, List<Card> cards) implements DrawPile, PlacePile {
         public Tableau() {
             this(new ArrayList<>(), new ArrayList<>());
+        }
+
+        private Tableau copy() {
+            return new Tableau(new ArrayList<>(hidden), new ArrayList<>(cards));
         }
 
         @Override
@@ -249,6 +342,17 @@ public class KlondikeBoard {
                 }
             }
             return false;
+        }
+
+        public int hiddenSize() {
+            return maxDraw() == 0 ? 0 :
+                hidden.isEmpty() && cards.get(0).rank() == Rank.KING ? 0 :
+                1 + hidden.size();
+        }
+
+        public long longhash() {
+            maxDraw();
+            return KlondikeBoard.longhash(cards) * 991 + KlondikeBoard.longhash(hidden);
         }
     }
 
