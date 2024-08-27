@@ -19,8 +19,13 @@ public class SparseArrayList<E> implements MyList<E> {
         size++;
     }
 
-    protected void compressOrGrow() {
-        compressOrGrow1();
+    private void compressOrGrow() {
+        if (size == array.length) {
+            array = Arrays.copyOf(array, size * 2);
+            return;
+        }
+        grow();
+        next = size;
     }
 
     @Override
@@ -56,12 +61,11 @@ public class SparseArrayList<E> implements MyList<E> {
         return result;
     }
 
-    protected void compressOrGrow1() {
-        if (size == array.length) {
-            array = Arrays.copyOf(array, size * 2);
-            return;
-        }
+    protected void grow() {
+        grow1();
+    }
 
+    protected void grow1() {
         var a = 0;
         while (array[a] != null) a++;
         var b = a + 1;
@@ -74,15 +78,9 @@ public class SparseArrayList<E> implements MyList<E> {
             }
             b++;
         }
-        next = size;
     }
 
-    protected void compressOrGrow2() {
-        if (size == array.length) {
-            array = Arrays.copyOf(array, size * 2);
-            return;
-        }
-
+    protected void grow2() {
         var a = 0;
         while (array[a] != null) a++;
         var b = a + 1;
@@ -95,15 +93,9 @@ public class SparseArrayList<E> implements MyList<E> {
             }
             b++;
         }
-        next = size;
     }
 
-    protected void compressOrGrow3() {
-        if (size == array.length) {
-            array = Arrays.copyOf(array, size * 2);
-            return;
-        }
-
+    protected void grow3() {
         var a = 0;
         var b = 0;
         while (a < size) {
@@ -115,7 +107,6 @@ public class SparseArrayList<E> implements MyList<E> {
             }
             b++;
         }
-        next = size;
     }
 
     private static class SANode<E> implements Node<E> {
