@@ -12,8 +12,8 @@ public class SparseArrayListTest extends MyListTestBase {
         MyList<String> newList() {
             return new SparseArrayList<>() {
                 @Override
-                protected void grow() {
-                    grow2();
+                protected void compress() {
+                    compress2();
                 }
             };
         }
@@ -24,8 +24,8 @@ public class SparseArrayListTest extends MyListTestBase {
         MyList<String> newList() {
             return new SparseArrayList<>() {
                 @Override
-                protected void grow() {
-                    grow3();
+                protected void compress() {
+                    compress3();
                 }
             };
         }

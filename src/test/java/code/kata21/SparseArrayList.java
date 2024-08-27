@@ -24,7 +24,7 @@ public class SparseArrayList<E> implements MyList<E> {
             array = Arrays.copyOf(array, size * 2);
             return;
         }
-        grow();
+        compress();
         next = size;
     }
 
@@ -61,11 +61,11 @@ public class SparseArrayList<E> implements MyList<E> {
         return result;
     }
 
-    protected void grow() {
-        grow1();
+    protected void compress() {
+        compress1();
     }
 
-    protected void grow1() {
+    protected void compress1() {
         var a = 0;
         while (array[a] != null) a++;
         var b = a + 1;
@@ -80,7 +80,7 @@ public class SparseArrayList<E> implements MyList<E> {
         }
     }
 
-    protected void grow2() {
+    protected void compress2() {
         var a = 0;
         while (array[a] != null) a++;
         var b = a + 1;
@@ -95,7 +95,7 @@ public class SparseArrayList<E> implements MyList<E> {
         }
     }
 
-    protected void grow3() {
+    protected void compress3() {
         var a = 0;
         var b = 0;
         while (a < size) {
