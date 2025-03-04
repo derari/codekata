@@ -2,7 +2,6 @@ package code.kata2;
 
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
 /**
  * Trampoline pattern

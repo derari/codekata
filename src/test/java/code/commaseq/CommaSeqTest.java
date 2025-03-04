@@ -50,10 +50,10 @@ class CommaSeqTest {
             var n = sequence.next();
             if (i % mod == 0) {
                 if (i == mod * 10) mod *= 10;
-                System.out.printf("%9d: %8d%n", i, n);
+                System.out.printf("%10d: %11d%n", i, n);
             }
         }
-        System.out.printf("%9d: %8d%n", i, sequence.current);
+        System.out.printf("%10d: %11d%n", i, sequence.current);
     }
 
     private static class Impl implements Iterator<Long> {

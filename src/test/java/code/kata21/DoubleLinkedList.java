@@ -4,26 +4,25 @@ import java.util.function.IntFunction;
 
 public class DoubleLinkedList<E> implements MyList<E> {
 
-    private final DLNode<E> head = new DLNode<>(null);
-    private final DLNode<E> tail = new DLNode<>(null);
+    private final DLNode<E> end = new DLNode<>(null);
     private int size = 0;
 
     {
-        head.setNext(tail);
+        end.setNext(end);
     }
 
     @Override
     public void add(E e) {
         var last = new DLNode<>(e);
-        tail.prev.setNext(last);
-        last.setNext(tail);
+        end.prev.setNext(last);
+        last.setNext(end);
         size++;
     }
 
     @Override
     public Node<E> find(E element) {
-        var current = head.next;
-        while (current != tail) {
+        var current = end.next;
+        while (current != end) {
             if (element.equals(current.value)) {
                 return current;
             }
@@ -43,7 +42,7 @@ public class DoubleLinkedList<E> implements MyList<E> {
     @Override
     public E[] toArray(IntFunction<E[]> generator) {
         var result = generator.apply(size);
-        var current = head;
+        var current = end;
         for (int i = 0; i < size; i++) {
             current = current.next;
             result[i] = current.value;
