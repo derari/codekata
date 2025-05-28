@@ -6,8 +6,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "java:S125"})
-public interface Peano {
+public interface Peano extends Comparable<Peano> {
 
     static Peano zero() {
         return Zero.INSTANCE;
@@ -51,6 +50,7 @@ public interface Peano {
         }
     }
 
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "java:S125"})
     class Zero extends Base {
 
         private static final Zero INSTANCE = new Zero();
@@ -115,12 +115,21 @@ public interface Peano {
         return apply(zero(), other::plus);
     }
 
-    default boolean isZero() {
-        return apply(true, b -> false);
+    default Comparison compareToZero() {
+        return apply(Comparison.EQUAL, c -> Comparison.GREATER);
+    }
+
+    default Comparison compare(Peano other) {
+        return minus(other).map(Peano::compareToZero).orElse(Comparison.LESS);
+    }
+
+    @Override
+    default int compareTo(Peano other) {
+        return compare(other).asInt();
     }
 
     default boolean eq(Peano other) {
-        return minus(other).map(Peano::isZero).orElse(false);
+        return compare(other).isEqual();
     }
 
     default boolean lt(Peano other) {
@@ -155,6 +164,35 @@ public interface Peano {
 
         private DivMod dec(Peano other) {
             return mod.minus(other).map(m -> new DivMod(div.inc(), m)).orElse(this);
+        }
+    }
+
+    enum Comparison {
+
+        LESS, EQUAL, GREATER;
+
+        public int asInt() {
+            return ordinal() - 1;
+        }
+
+        public boolean isEqual() {
+            return this == EQUAL;
+        }
+
+        public boolean isLess() {
+            return this == LESS;
+        }
+
+        public boolean isGreater() {
+            return this == GREATER;
+        }
+
+        public boolean isLessOrEqual() {
+            return this != GREATER;
+        }
+
+        public boolean isGreaterOrEqual() {
+            return this != LESS;
         }
     }
 }

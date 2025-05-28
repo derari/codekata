@@ -3,7 +3,7 @@ package code.codewars.peano;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
+import java.util.*;
 
 import static code.codewars.peano.Peano.zero;
 
@@ -58,6 +58,20 @@ class PeanoTest {
         assertEquals(4, n(2).times(n(2)));
         assertEquals(6, n(2).times(n(3)));
         assertEquals(9, n(3).times(n(3)));
+    }
+
+    @Test
+    void compare() {
+        assertEquals(0, n(1).compareTo(n(1)));
+        assertEquals(true, n(0).compare(n(1)).isLess());
+        assertEquals(true, n(5).compare(n(3)).isGreater());
+
+        assertEquals(true, n(3).eq(n(3)));
+        assertEquals(true, n(5).gt(n(3)));
+
+        var list = new ArrayList<>(List.of(n(4), n(2), n(3), n(1)));
+        Collections.sort(list);
+        assertEquals(List.of(n(1), n(2), n(3), n(4)), list);
     }
 
     @Test
