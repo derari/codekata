@@ -62,7 +62,7 @@ class PeanoTest {
 
     @Test
     void compare() {
-        assertEquals(0, n(1).compareTo(n(1)));
+        assertEquals(true, n(1).compare(n(1)).isEqual());
         assertEquals(true, n(0).compare(n(1)).isLess());
         assertEquals(true, n(5).compare(n(3)).isGreater());
 

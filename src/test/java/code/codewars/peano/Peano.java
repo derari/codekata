@@ -100,7 +100,7 @@ public interface Peano extends Comparable<Peano> {
     }
 
     default Optional<Peano> dec() {
-        return apply(Optional.empty(), p -> p.map(Peano::inc).or(Zero.GET_OPT));
+        return apply(Optional.empty(), op -> op.map(Peano::inc).or(Zero.GET_OPT));
     }
 
     default Peano plus(Peano other) {
