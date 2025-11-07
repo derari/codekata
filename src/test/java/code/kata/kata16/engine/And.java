@@ -2,15 +2,19 @@ package code.kata.kata16.engine;
 
 import code.kata.kata16.OtherServices;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 public record And<T extends State>(List<Condition<T>> conditions) implements Condition<T> {
 
     public static <T extends State> Condition<T> all(List<? extends Condition<T>> conditions) {
         if (conditions == null) return (a, b) -> false;
-        if (conditions.size() == 1) return conditions.get(0);
-        return new And<>(new ArrayList<>(conditions));
+        var filtered = conditions.stream()
+                .filter(Objects::nonNull)
+                .flatMap(c -> c instanceof And<T> and ? and.conditions().stream() : Stream.of(c))
+                .toList();
+        if (filtered.size() == 1) return filtered.getFirst();
+        return new And<>(filtered);
     }
 
     @SafeVarargs

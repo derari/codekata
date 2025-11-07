@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NONE)
 @JsonDeserialize(using = Or.OrDeserializer.class)
@@ -16,8 +17,12 @@ public record Or<T extends State>(List<Condition<T>> conditions) implements Cond
 
     public static <T extends State> Condition<T> any(List<? extends Condition<T>> conditions) {
         if (conditions == null) return (a, b) -> false;
-        if (conditions.size() == 1) return conditions.get(0);
-        return new Or<>(new ArrayList<>(conditions));
+        List<Condition<T>> filtered = conditions.stream()
+                .filter(Objects::nonNull)
+                .flatMap(c -> c instanceof Or<T> or ? or.conditions().stream() : Stream.of(c))
+                .toList();
+        if (filtered.size() == 1) return filtered.getFirst();
+        return new Or<>(filtered);
     }
 
     @SafeVarargs
@@ -32,10 +37,10 @@ public record Or<T extends State>(List<Condition<T>> conditions) implements Cond
 
     static class OrDeserializer extends JsonDeserializer<Or<?>> {
 
-        private final TypeReference<List<Condition<?>>> T_CONDITIONS = new TypeReference<>() { };
+        private static final TypeReference<List<Condition<?>>> T_CONDITIONS = new TypeReference<>() { };
 
         @Override
-        public Or<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        public Or<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             return new Or<>(new ArrayList<>(p.readValueAs(T_CONDITIONS)));
         }
     }

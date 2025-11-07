@@ -80,9 +80,9 @@ class CommaSeqTest {
         }
 
         private long first(long n) {
-            while (n >= 1000) n /= 1000;
-            while (n >= 10) n /= 10;
-            return n;
+            var d = 10L;
+            while (d * 10 <= n) d *= 10;
+            return n / d;
         }
 
         @Override
